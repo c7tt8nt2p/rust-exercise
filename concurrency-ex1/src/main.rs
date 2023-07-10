@@ -35,7 +35,6 @@ impl Philosopher {
 
     fn eat(&self) {
         println!("{} is trying to eat...", self.name);
-        println!("{} is trying to eat...", self.name);
         let left_fork_lock = self.left_fork.lock().unwrap();
         let right_fork_lock = self.right_fork.lock().unwrap();
         println!(
