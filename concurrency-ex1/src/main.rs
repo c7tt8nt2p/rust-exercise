@@ -34,12 +34,18 @@ impl Philosopher {
     // }
 
     fn eat(&self) {
-        println!("{} is trying to eat...", &self.name);
+        println!("{} is trying to eat...", self.name);
+        println!("{} is trying to eat...", self.name);
         let left_fork_lock = self.left_fork.lock().unwrap();
         let right_fork_lock = self.right_fork.lock().unwrap();
-        println!("{} got 2 forks !!!", &self.name);
+        println!(
+            "{} got 2 forks !!!!!!!!! id = {} and {}",
+            self.name, left_fork_lock.id, right_fork_lock.id
+        );
         thread::sleep(Duration::from_millis(100));
         println!("......{} is done", &self.name);
+        drop(left_fork_lock);
+        drop(right_fork_lock);
     }
 }
 
@@ -57,10 +63,12 @@ fn main() {
 
     let mut handler = Vec::new();
     for i in 0..5 {
+        let left_i = (i-1_i8).rem_euclid(5_i8) as usize;
+        let right_i = i as usize;
         let phil = Philosopher::new(
-            PHILOSOPHERS[i],
-            Arc::clone(&forks[(i)]),
-            Arc::clone(&forks[(i + 1) % forks.len()]),
+            PHILOSOPHERS[i as usize],
+            Arc::clone(&forks[left_i]),
+            Arc::clone(&forks[right_i]),
         );
         handler.push(thread::spawn(move || {
             (0..10).for_each(|_| phil.eat());
