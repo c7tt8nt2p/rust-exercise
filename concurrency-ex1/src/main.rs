@@ -1,5 +1,4 @@
-use std::os::unix::raw::gid_t;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -35,9 +34,10 @@ impl Philosopher {
     // }
 
     fn eat(&self) {
+        println!("{} is trying to eat...", &self.name);
         let left_fork_lock = self.left_fork.lock().unwrap();
         let right_fork_lock = self.right_fork.lock().unwrap();
-        println!("{} is eating...", &self.name);
+        println!("{} got 2 forks !!!", &self.name);
         thread::sleep(Duration::from_millis(100));
         println!("......{} is done", &self.name);
     }
@@ -53,29 +53,18 @@ static PHILOSOPHERS: &[&str] = &[
 
 fn main() {
     // Create forks
-    // let forks: Vec<Arc<Mutex<Fork>>> = (0..5).map(|i| Arc::new(Mutex::new(Fork::new(i)))).collect();
-
-    // Create philosophers
-    let philosophers: Vec<Arc<Mutex<Philosopher>>> = (0..5)
-        .map(|i| {
-            Arc::new(Mutex::new(Philosopher::new(
-                PHILOSOPHERS[i],
-                Arc::new(Mutex::new(Fork::new(i))),
-                Arc::new(Mutex::new(Fork::new((i + 1) % 5))),
-            )))
-        })
-        .collect();
-    // Make each of them think and eat 100 times
+    let forks: Vec<Arc<Mutex<Fork>>> = (0..5).map(|i| Arc::new(Mutex::new(Fork::new(i)))).collect();
 
     let mut handler = Vec::new();
-    for p in philosophers {
-        for _ in 0..10 {
-            let p_clone = p.clone();
-            let handle = thread::spawn(move || {
-                p_clone.lock().unwrap().eat();
-            });
-            handler.push(handle);
-        }
+    for i in 0..5 {
+        let phil = Philosopher::new(
+            PHILOSOPHERS[i],
+            Arc::clone(&forks[(i)]),
+            Arc::clone(&forks[(i + 1) % forks.len()]),
+        );
+        handler.push(thread::spawn(move || {
+            (0..10).for_each(|_| phil.eat());
+        }));
     }
     handler.into_iter().for_each(|e| e.join().unwrap());
     // Output their thoughts
