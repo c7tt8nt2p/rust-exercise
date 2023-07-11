@@ -13,4 +13,5 @@ members = [
     "day3-ex1",
     "concurrency-ex1",
     "concurrency-ex2",
+    "concurrency-ex3",
 ]
