@@ -8,7 +8,7 @@ use reqwest::Url;
 use scraper::{Html, Selector};
 use thiserror::Error;
 
-const MAXIMUM_URL: i32 = 100;
+const MAXIMUM_URL: i32 = 15;
 static URL_COUNTER: OnceLock<Mutex<i32>> = OnceLock::new();
 
 #[derive(Error, Debug)]
