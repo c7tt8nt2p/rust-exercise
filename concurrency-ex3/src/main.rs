@@ -92,8 +92,7 @@ async fn main() {
         );
 
         handler.push(tokio::spawn(async move {
-            for ii in 0..100 {
-                println!("i - ii: {} - {}",i, ii);
+            for _ in 0..100 {
                 phil.eat().await
             }
         }));
