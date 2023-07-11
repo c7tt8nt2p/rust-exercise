@@ -1,9 +1,8 @@
 use std::sync::Arc;
 use std::time::Duration;
-use std::{future, thread};
 
 use tokio::sync::Mutex;
-use tokio::try_join;
+use tokio::time::sleep;
 
 struct Fork {
     id: usize,
@@ -61,7 +60,7 @@ impl Philosopher {
             "{} got 2 forks !!!!!!!!! id = {} and {}",
             self.name, left_fork_lock.id, right_fork_lock.id
         );
-        thread::sleep(Duration::from_millis(10));
+        sleep(Duration::from_millis(10)).await;
         println!("......{} is done", &self.name);
         //drop(left_fork_lock);
         //drop(right_fork_lock);
@@ -92,7 +91,8 @@ async fn main() {
         );
 
         handler.push(tokio::spawn(async move {
-            for _ in 0..100 {
+            for ii in 0..100 {
+                println!("i - ii: {} - {}", i, ii);
                 phil.eat().await
             }
         }));
