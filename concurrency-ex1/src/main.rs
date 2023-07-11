@@ -13,14 +13,21 @@ impl Fork {
 }
 
 struct Philosopher {
+    id: usize,
     name: String,
     left_fork: Arc<Mutex<Fork>>,
     right_fork: Arc<Mutex<Fork>>,
 }
 
 impl Philosopher {
-    fn new(name: &str, left_fork: Arc<Mutex<Fork>>, right_fork: Arc<Mutex<Fork>>) -> Self {
+    fn new(
+        id: usize,
+        name: &str,
+        left_fork: Arc<Mutex<Fork>>,
+        right_fork: Arc<Mutex<Fork>>,
+    ) -> Self {
         Self {
+            id,
             name: name.to_owned(),
             left_fork,
             right_fork,
@@ -35,16 +42,32 @@ impl Philosopher {
 
     fn eat(&self) {
         println!("{} is trying to eat...", self.name);
-        let left_fork_lock = self.left_fork.lock().unwrap();
-        let right_fork_lock = self.right_fork.lock().unwrap();
+        let left_fork_lock = {
+            if self.id == 0 {
+                self.left_fork.lock().unwrap()
+            } else {
+                self.right_fork.lock().unwrap()
+            }
+        };
+        // println!(
+        //     "{} got left fork !!!!!!!!! id = {}",
+        //     self.name, left_fork_lock.id
+        // );
+        let right_fork_lock = {
+            if self.id == 0 {
+                self.right_fork.lock().unwrap()
+            } else {
+                self.left_fork.lock().unwrap()
+            }
+        };
         println!(
             "{} got 2 forks !!!!!!!!! id = {} and {}",
             self.name, left_fork_lock.id, right_fork_lock.id
         );
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(10));
         println!("......{} is done", &self.name);
-        drop(left_fork_lock);
-        drop(right_fork_lock);
+        //drop(left_fork_lock);
+        //drop(right_fork_lock);
     }
 }
 
@@ -62,15 +85,16 @@ fn main() {
 
     let mut handler = Vec::new();
     for i in 0..5 {
-        let left_i = (i-1_i8).rem_euclid(5_i8) as usize;
-        let right_i = i as usize;
+        let left_i = i as usize;
+        let right_i = (i - 1_i8).rem_euclid(5_i8) as usize;
         let phil = Philosopher::new(
+            i as usize,
             PHILOSOPHERS[i as usize],
             Arc::clone(&forks[left_i]),
             Arc::clone(&forks[right_i]),
         );
         handler.push(thread::spawn(move || {
-            (0..10).for_each(|_| phil.eat());
+            (0..100).for_each(|_| phil.eat());
         }));
     }
     handler.into_iter().for_each(|e| e.join().unwrap());
