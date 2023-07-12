@@ -14,4 +14,5 @@ members = [
     "concurrency-ex1",
     "concurrency-ex2",
     "concurrency-ex3",
+    "mini-redis",
 ]
