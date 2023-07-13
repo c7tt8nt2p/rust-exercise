@@ -1,0 +1,57 @@
+use std::error::Error;
+use std::net::SocketAddr;
+
+use futures_util::sink::SinkExt;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::broadcast::{channel, Sender};
+use tokio_websockets::{Message, ServerBuilder, WebsocketStream};
+
+async fn handle_connection(
+    addr: SocketAddr,
+    mut ws_stream: WebsocketStream<TcpStream>,
+    bcast_tx: Sender<String>,
+) -> Result<(), Box<dyn Error + Send + Sync>> {
+
+    let mut bcast_rx = bcast_tx.subscribe();
+
+    let handle_messages = tokio::spawn(async move {
+        if let Some(result) = ws_stream.next().await {
+            let message = result.expect("Failed to receive message from client");
+
+            let message = message.as_text().unwrap();
+            println!(
+                "Received message from [{}:{}]: {}",
+                addr.ip(),
+                addr.port(),
+                message
+            );
+
+            bcast_tx.send(message.to_string()).unwrap();
+        }
+    });
+
+    // Wait for both tasks to complete
+    tokio::select! {
+        _ = handle_messages => {Ok(())}
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
+    let (bcast_tx, _) = channel(16);
+
+    let listener = TcpListener::bind("127.0.0.1:2000").await?;
+    println!("listening on port 2000");
+
+    loop {
+        let (socket, addr) = listener.accept().await?;
+        println!("New connection from {addr:?}");
+        let bcast_tx = bcast_tx.clone();
+        tokio::spawn(async move {
+            // Wrap the raw TCP stream into a websocket.
+            let ws_stream = ServerBuilder::new().accept(socket).await?;
+
+            handle_connection(addr, ws_stream, bcast_tx).await
+        });
+    }
+}
