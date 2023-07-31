@@ -3,6 +3,13 @@ use tokio::io::BufReader;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    let mut client = Client::connect(config::BINDING_ADDRESS).await;
+    let response = client.ping(Some("xxx")).await.unwrap();
+    Ok(())
+}
+
 pub struct Client {
     connection: BufReader<TcpStream>,
 }
