@@ -10,11 +10,11 @@ async fn main() -> io::Result<()> {
     let stdin = tokio::io::stdin();
     let mut lines = BufReader::new(stdin).lines();
 
-    while let Ok(line) = lines.next_line().await {
-        client.ping(line.as_deref()).await?;
+    loop {
+        let line = lines.next_line().await;
+        let text: String = line?.as_deref().map_or("\r\n".to_string(), |e| e.to_string() + "\r\n");
+        client.connection.write_all(text.as_bytes()).await?;
     }
-
-    Ok(())
 }
 
 pub struct Client {
