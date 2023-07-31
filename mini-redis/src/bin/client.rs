@@ -1,12 +1,19 @@
 use tokio::io;
-use tokio::io::BufReader;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let mut client = Client::connect(config::BINDING_ADDRESS).await;
-    let response = client.ping(Some("xxx")).await.unwrap();
+
+    let stdin = tokio::io::stdin();
+    let mut lines = BufReader::new(stdin).lines();
+
+    while let Ok(line) = lines.next_line().await {
+        client.ping(line.as_deref()).await?;
+    }
+
     Ok(())
 }
 
